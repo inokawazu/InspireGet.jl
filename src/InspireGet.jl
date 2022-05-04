@@ -27,7 +27,7 @@ function get_record(identifier_type::AbstractString, identifier_value::AbstractS
 
     return get(
         join(
-             (INSPIRE_API_URL, identifier_type, identifier_value), ','
+             (INSPIRE_API_URL, identifier_type, identifier_value), '/'
             )
        )
 end
