@@ -1,0 +1,7 @@
+name = "InspireGet"
+uuid = "6e4dedb0-ec53-46fd-a642-dfe09883ef1f"
+authors = ["Markus-Amano <markus.a.amano@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
