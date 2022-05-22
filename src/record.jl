@@ -39,3 +39,42 @@ function get_record(identifier_type::AbstractString, identifier_value::AbstractS
 
     return HTTP.get(url, headers)
 end
+
+const StringMissing = Union{String,Missing}
+
+function record_type(r::Record)::StringMissing
+    mch = match(r"([^/]*)\.[^\.]*$", r.metadata["\$schema"])
+
+    isnothing(mch) && return missing
+
+    return mch[1]
+end
+
+function name(r::Record)::StringMissing
+    md = r.metadata
+    
+    haskey(md, "name") || return missing
+    mdn = md["name"]
+
+    isempty(mdn) && return missing
+    
+    return last(first(mdn))
+end
+
+function Base.show(io::IO, r::Record)
+    ucft = uppercasefirst(record_type(r))
+
+    println("Inspire Record ($(ucft))")
+    println(io, "\tId:", r.id)
+    println(io, "\tCreated:", r.created)
+    println(io, "\tUpdated:", r.created)
+
+    metadatas = [
+                 ("Name", name(r)),
+                ]
+
+    foreach(metadatas) do (lbl, val)
+        ismissing(val) && return 
+        println(io, "\t",lbl,":", val)
+    end
+end
