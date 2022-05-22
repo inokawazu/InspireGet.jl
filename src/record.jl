@@ -31,7 +31,6 @@ function get_record(identifier_type::AbstractString, identifier_value::AbstractS
         content_format = "json"
     )::HTTP.Messages.Response
 
-
     check_identifier_type(identifier_type)
     check_format(content_format)
 
@@ -51,14 +50,22 @@ function get_if_key_and_not_empty_or_missing(r::Record, key::String)
     return mdn
 end
 
-for (entry_name, getter) in [
-                          ("name", :name), 
-                          ("citation_count", :citation_count), 
-                         ]
+function name(r::Record)
+    mdn = get_if_key_and_not_empty_or_missing(r, "name")
+    ismissing(mdn) && return missing
+    
+    if haskey(mdn, "preferred_name")
+        return mdn["preferred_name"]
+    end
+    return get(mdn, "value", missing)
+end
+
+for getter in [:citation_count]
     @eval function $getter(r::Record)
-        mdn = get_if_key_and_not_empty_or_missing(r, $entry_name)
+        key = string($getter)
+        mdn = get_if_key_and_not_empty_or_missing(r, key)
         ismissing(mdn) && return missing
-        return last(first(mdn))
+        return mdn
     end
 end
 
@@ -74,6 +81,13 @@ function title(r::Record)
     return first(mdn)["title"]
 end
 
+function author_full_names(r::Record)
+    mdn = get_if_key_and_not_empty_or_missing(r, "authors")
+    ismissing(mdn) && return missing
+    
+    return map(x -> x["full_name"], mdn)
+end
+
 function Base.show(io::IO, r::Record)
     ucft = uppercasefirst(r.type)
 
@@ -83,15 +97,14 @@ function Base.show(io::IO, r::Record)
     println(io, "\tUpdated:", r.created)
 
     metadatas = [
-                 ("Name", name(r)),
-                 ("Title", title(r)),
-                 ("Keywords", keywords(r)),
-                 # ("Citations", citation_count(r)),
+                 ("Name",    name(r)),
+                 ("Title",   title(r)),
+                 ("Authors", author_full_names(r)),
                 ]
 
     foreach(metadatas) do (lbl, val)
         ismissing(val) && return 
-        isa(val, Vector) && (val = join(val, ", "))
+        isa(val, Vector) && (val = join(val, "; "))
         println(io, "\t",lbl,":", val)
     end
 end
