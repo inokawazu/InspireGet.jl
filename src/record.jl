@@ -1,4 +1,5 @@
 struct Record
+    type::String
     id::Int
     created
     updated
@@ -8,22 +9,22 @@ end
 
 function Record(identifier_type::AbstractString, identifier_value)
     resp = get_record(identifier_type, string(identifier_value))
-    return Record(resp)
+    return Record(identifier_type, resp)
 end
 
-function Record(resp::HTTP.Messages.Response)
+function Record(type::String, resp::HTTP.Messages.Response)
     json = JSON.parse(String(resp.body))
-    return Record(json)
+    return Record(type, json)
 end
 
-function Record(json::Dict)
+function Record(type::String, json::Dict)
     id = parse(Int,json["id"])
     created = parse_inspire_timestamp(json["created"])
     updated = parse_inspire_timestamp(json["updated"])
     links = Dict{String, String}(json["links"])
     metadata = json["metadata"]
 
-    return Record(id, created, updated, links, metadata)
+    return Record(type, id, created, updated, links, metadata)
 end
 
 function get_record(identifier_type::AbstractString, identifier_value::AbstractString; 
@@ -42,27 +43,41 @@ end
 
 const StringMissing = Union{String,Missing}
 
-function record_type(r::Record)::StringMissing
-    mch = match(r"([^/]*)\.[^\.]*$", r.metadata["\$schema"])
-
-    isnothing(mch) && return missing
-
-    return mch[1]
-end
-
-function name(r::Record)::StringMissing
+function get_if_key_and_not_empty_or_missing(r::Record, key::String)
     md = r.metadata
-    
-    haskey(md, "name") || return missing
-    mdn = md["name"]
+    haskey(md, key) || return missing
+    mdn = md[key]
 
     isempty(mdn) && return missing
-    
-    return last(first(mdn))
+
+    return mdn
+end
+
+for (entry_name, getter) in [
+                          ("name", :name), 
+                          ("citation_count", :citation_count), 
+                         ]
+    @eval function $getter(r::Record)::StringMissing
+        mdn = get_if_key_and_not_empty_or_missing(r, $entry_name)
+        ismissing(mdn) && return missing
+        return string(last(first(mdn)))
+    end
+end
+
+function keywords(r::Record)::Union{Vector{String}, Missing}
+    mdn = get_if_key_and_not_empty_or_missing(r, "keywords")
+    ismissing(mdn) && return missing
+    return [kywd["value"] for kywd in mdn]
+end
+
+function title(r::Record)::StringMissing
+    mdn = get_if_key_and_not_empty_or_missing(r, "titles")
+    ismissing(mdn) && return missing
+    return first(mdn)["title"]
 end
 
 function Base.show(io::IO, r::Record)
-    ucft = uppercasefirst(record_type(r))
+    ucft = uppercasefirst(r.type)
 
     println("Inspire Record ($(ucft))")
     println(io, "\tId:", r.id)
@@ -71,10 +86,14 @@ function Base.show(io::IO, r::Record)
 
     metadatas = [
                  ("Name", name(r)),
+                 ("Title", title(r)),
+                 ("Keywords", keywords(r)),
+                 # ("Citations", citation_count(r)),
                 ]
 
     foreach(metadatas) do (lbl, val)
         ismissing(val) && return 
+        isa(val, Vector) && (val = join(val, ", "))
         println(io, "\t",lbl,":", val)
     end
 end
