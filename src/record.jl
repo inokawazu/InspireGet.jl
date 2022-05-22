@@ -41,8 +41,6 @@ function get_record(identifier_type::AbstractString, identifier_value::AbstractS
     return HTTP.get(url, headers)
 end
 
-const StringMissing = Union{String,Missing}
-
 function get_if_key_and_not_empty_or_missing(r::Record, key::String)
     md = r.metadata
     haskey(md, key) || return missing
@@ -57,20 +55,20 @@ for (entry_name, getter) in [
                           ("name", :name), 
                           ("citation_count", :citation_count), 
                          ]
-    @eval function $getter(r::Record)::StringMissing
+    @eval function $getter(r::Record)
         mdn = get_if_key_and_not_empty_or_missing(r, $entry_name)
         ismissing(mdn) && return missing
-        return string(last(first(mdn)))
+        return last(first(mdn))
     end
 end
 
-function keywords(r::Record)::Union{Vector{String}, Missing}
+function keywords(r::Record)
     mdn = get_if_key_and_not_empty_or_missing(r, "keywords")
     ismissing(mdn) && return missing
     return [kywd["value"] for kywd in mdn]
 end
 
-function title(r::Record)::StringMissing
+function title(r::Record)
     mdn = get_if_key_and_not_empty_or_missing(r, "titles")
     ismissing(mdn) && return missing
     return first(mdn)["title"]
