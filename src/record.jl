@@ -50,41 +50,42 @@ function get_if_key_and_not_empty_or_missing(r::Record, key::String)
     return mdn
 end
 
+macro get_metadata_or_return_missing(mdn, r, kywd)    
+    return quote
+        $(esc(mdn)) = get_if_key_and_not_empty_or_missing($(esc(r)), $kywd)
+        ismissing($(esc(mdn))) && return missing
+    end
+end
+
 function name(r::Record)
-    mdn = get_if_key_and_not_empty_or_missing(r, "name")
-    ismissing(mdn) && return missing
-    
+    @get_metadata_or_return_missing(mdn,r,"name")
     if haskey(mdn, "preferred_name")
         return mdn["preferred_name"]
     end
     return get(mdn, "value", missing)
 end
 
+# simple getters
 for getter in [:citation_count, :citation_count_without_self_citations]
     @eval function $getter(r::Record)
         key = string($getter)
-        mdn = get_if_key_and_not_empty_or_missing(r, key)
-        ismissing(mdn) && return missing
+        @get_metadata_or_return_missing(mdn,r,key)
         return mdn
     end
 end
 
 function keywords(r::Record)
-    mdn = get_if_key_and_not_empty_or_missing(r, "keywords")
-    ismissing(mdn) && return missing
+    @get_metadata_or_return_missing(mdn,r,"keywords")
     return [kywd["value"] for kywd in mdn]
 end
 
 function title(r::Record)
-    mdn = get_if_key_and_not_empty_or_missing(r, "titles")
-    ismissing(mdn) && return missing
+    @get_metadata_or_return_missing(mdn,r,"titles")
     return first(mdn)["title"]
 end
 
 function author_full_names(r::Record)
-    mdn = get_if_key_and_not_empty_or_missing(r, "authors")
-    ismissing(mdn) && return missing
-    
+    @get_metadata_or_return_missing(mdn,r,"authors")
     return map(x -> x["full_name"], mdn)
 end
 
