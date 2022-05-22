@@ -11,7 +11,7 @@ Using `get_record`.
 ```julia
     type = "authors"
     id = "999108"
-    get_record(type, id) # returns a Record struct.
+    InspireHEP.Record(type, id) # returns a Record struct.
 ```
 
 where the following are possible record types.
