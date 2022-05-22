@@ -60,7 +60,7 @@ function name(r::Record)
     return get(mdn, "value", missing)
 end
 
-for getter in [:citation_count]
+for getter in [:citation_count, :citation_count_without_self_citations]
     @eval function $getter(r::Record)
         key = string($getter)
         mdn = get_if_key_and_not_empty_or_missing(r, key)
