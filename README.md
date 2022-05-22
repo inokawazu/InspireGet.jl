@@ -10,7 +10,7 @@ Using `get_record`.
 
 ```julia
     type = "authors"
-    id = "999108"
+    id = "999108" # this can be a Integer too!
     InspireHEP.Record(type, id) # returns a Record struct.
 ```
 
