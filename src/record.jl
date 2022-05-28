@@ -89,6 +89,12 @@ function author_full_names(r::Record)
     return map(x -> x["full_name"], mdn)
 end
 
+function emails(r::Record; current=true)
+    @get_metadata_or_return_missing(mdn,r,"email_addresses")
+    fmdn = filter(x -> !(current) || x["current"], mdn)
+    return get.(fmdn, "value", missing)
+end
+
 function Base.show(io::IO, r::Record)
     ucft = uppercasefirst(r.type)
 
