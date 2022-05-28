@@ -95,6 +95,18 @@ function emails(r::Record; current=true)
     return get.(fmdn, "value", missing)
 end
 
+function inspire_identifier(r::Record)
+    @get_metadata_or_return_missing(ids, r, "ids")
+
+    identifier = missing
+    for id in ids
+        if id["schema"] == "INSPIRE BAI"
+            identifier = id["value"]
+        end
+    end
+    return identifier
+end
+
 function Base.show(io::IO, r::Record)
     ucft = uppercasefirst(r.type)
 
