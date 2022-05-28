@@ -79,6 +79,9 @@ function keywords(r::Record)
     return [kywd["value"] for kywd in mdn]
 end
 
+created(r::Record) = r.created
+updated(r::Record) = r.updated
+
 function title(r::Record)
     @get_metadata_or_return_missing(mdn,r,"titles")
     return first(mdn)["title"]
