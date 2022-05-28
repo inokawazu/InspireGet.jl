@@ -1,7 +1,12 @@
 using InspireGet
 
-author_id = 1778034
-author_record = InspireGet.Record("authors", author_id)
+import InspireGet as IG
 
-println("Retrived author record")
+author_id = 1778034
+author_record = IG.Record("authors", author_id)
+
 println(author_record)
+println("Retrived author record")
+
+author_articles = IG.articles(author_record)
+println("Retrived $(IG.name(author_record))'s articles")
