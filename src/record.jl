@@ -107,6 +107,16 @@ function inspire_identifier(r::Record)
     return identifier
 end
 
+function articles(r::Record)
+    iid = inspire_identifier(r)
+    ismissing(iid) && return missing
+    
+    resp = InspireGet.search("literature", iid)
+    my_articles = JSON.parse(String(resp.body))["hits"]["hits"]
+
+    return Record.("literature", my_articles)
+end
+
 function Base.show(io::IO, r::Record)
     ucft = uppercasefirst(r.type)
 
