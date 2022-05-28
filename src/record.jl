@@ -50,10 +50,27 @@ function get_if_key_and_not_empty_or_missing(r::Record, key::String)
     return mdn
 end
 
+function get_if_key_and_not_empty_or_false(r::Record, key::String)
+    md = r.metadata
+    haskey(md, key) || return false
+    mdn = md[key]
+
+    isempty(mdn) && return false
+
+    return mdn
+end
+
 macro get_metadata_or_return_missing(mdn, r, kywd)    
     return quote
-        $(esc(mdn)) = get_if_key_and_not_empty_or_missing($(esc(r)), $kywd)
+        $(esc(mdn)) = get_if_key_and_not_empty_or_missing($(esc(r)), $(esc(kywd)))
         ismissing($(esc(mdn))) && return missing
+    end
+end
+
+macro get_metadata_or_return_false(mdn, r, kywd)    
+    return quote
+        $(esc(mdn)) = get_if_key_and_not_empty_or_false($(esc(r)), $(esc(kywd)))
+        ismissing($(esc(mdn))) && return false
     end
 end
 
@@ -65,11 +82,20 @@ function name(r::Record)
     return get(mdn, "value", missing)
 end
 
-# simple getters
+# simple attr getters
 for getter in [:citation_count, :citation_count_without_self_citations]
     @eval function $getter(r::Record)
         key = string($getter)
         @get_metadata_or_return_missing(mdn,r,key)
+        return mdn
+    end
+end
+
+# simple true\false getters
+for getter in [:curated, :citeable, :refereed]
+    @eval function $getter(r::Record)
+        key = string($getter)
+        @get_metadata_or_return_false(mdn, r, key)
         return mdn
     end
 end
